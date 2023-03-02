@@ -1,11 +1,11 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
 const electronDl = require("electron-dl");
+const urlExists = require("url-exist");
 
 const array = require("./constants");
 
+let win;
 electronDl({
-  directory:
-    "/Users/utkarshmehta/Desktop/one-percent-startup/cinepolis/download-poc/downloads",
   onTotalProgress: (progress) => {
     // TODO: show download progress for new files
     // console.log("total progress", progress);
@@ -22,7 +22,8 @@ electronDl({
     }
     return progress;
   },
-  showBadge: false,
+
+  showBadge: true,
   showProgressBar: true, // TODO: set it to false
   overwrite: true,
   // onStarted: (item) => {
@@ -31,22 +32,27 @@ electronDl({
   // }
 });
 
-const downloadAll = async ({ url }) => {
+const downloadAll = async (win, { url }) => {
   // console.log("received download request", url);
-  let win = BrowserWindow.getFocusedWindow();
+  // console.log(app.getAppPath());
+  // let win = BrowserWindow.getFocusedWindow();
   // console.log("win", win);
-  console.log(await electronDl.download(win, url));
+  await electronDl.download(win, url, {
+    directory: "D:\\videostation\\device_js_download_poc\\download\\",
+    overwrite: true,
+  });
 };
 
-let win;
 (async () => {
   await app.whenReady();
   win = new BrowserWindow();
 
-  setTimeout(() => {
+  setTimeout(async () => {
     for (const filePath of array.map((c) => c.path)) {
-      console.log("downloading", filePath);
-      downloadAll({ url: filePath });
+      const exists = await urlExists(filePath);
+      if (exists) {
+        await downloadAll(win, { url: filePath });
+      }
     }
   }, 1000);
 })();
